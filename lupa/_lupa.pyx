@@ -129,7 +129,6 @@ def lua_type(obj):
 
 
 @cython.no_gc_clear
-@cython.auto_pickle(True)
 cdef class LuaRuntime:
     """The main entry point to the Lua runtime.
 
