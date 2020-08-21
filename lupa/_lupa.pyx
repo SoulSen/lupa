@@ -456,7 +456,7 @@ def unpacks_lua_table(func):
     """
     @wraps(func)
     def wrapper(*args, **kwargs):
-        args, kwargs = _fix_args_kwargs(args)
+        args, kwargs = _fix_args_kwargs(args, kwargs)
         return func(*args, **kwargs)
     return wrapper
 
