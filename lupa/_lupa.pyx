@@ -452,8 +452,7 @@ def unpacks_lua_table(func):
     """
     @wraps(func)
     def wrapper(*args, **kwargs):
-        if len(args) > 0 and isinstance(args[0], _LuaTable):
-            args, kwargs = _fix_args_kwargs(args)
+        args, kwargs = _fix_args_kwargs(args)
         return func(*args, **kwargs)
     return wrapper
 
@@ -465,24 +464,23 @@ def unpacks_lua_table_method(meth):
     """
     @wraps(meth)
     def wrapper(self, *args, **kwargs):
-        if len(args) > 0 and isinstance(args[0], _LuaTable):
-            args, kwargs = _fix_args_kwargs(args)
+        args, kwargs = _fix_args_kwargs(args, kwargs)
         return meth(self, *args, **kwargs)
     return wrapper
 
 
-cdef tuple _fix_args_kwargs(tuple args):
+cdef tuple _fix_args_kwargs(tuple args, dict kwargs):
     """
     Extract named arguments from args passed to a Python function by Lua
     script. Arguments are processed only if a single argument is passed and
     it is a table.
     """
     if len(args) != 1:
-        return args, {}
+        return args, kwargs
 
     arg = args[0]
     if not isinstance(arg, _LuaTable):
-        return args, {}
+        return args, kwargs
 
     table = <_LuaTable>arg
     encoding = table._runtime._source_encoding
@@ -499,7 +497,7 @@ cdef tuple _fix_args_kwargs(tuple args):
         for key, value in _LuaIter(table, ITEMS)
         if not isinstance(key, (int, long))
     }
-    return new_args, new_kwargs
+    return new_args, {**kwargs, **new_kwargs}
 
 
 ################################################################################
@@ -931,8 +929,7 @@ cdef object resume_lua_thread(_LuaThread thread, tuple args):
             nargs = len(args)
             push_lua_arguments(thread._runtime, co, args)
         with nogil:
-            status = lua.lua_resume(co, L, nargs)
-        nres = lua.lua_gettop(co)
+            status = lua.lua_resume(co, L, nargs, &nres)
         if status != lua.LUA_YIELD:
             if status == 0:
                 # terminated
