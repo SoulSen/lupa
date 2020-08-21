@@ -1,4 +1,3 @@
-
 cdef extern from *:
     ctypedef struct va_list
 
